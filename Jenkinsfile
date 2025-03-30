@@ -9,16 +9,20 @@ pipeline {
         stage('Build and Push Docker Images') {
             steps {
                 script {
-                    sh 'docker-compose build'
-                    sh 'docker-compose push'
+                    docker.image('docker/compose:1.29.2').inside("-v /var/run/docker.sock:/var/run/docker.sock") {
+                        sh 'docker-compose build'
+                        sh 'docker-compose push'
+                    }
                 }
             }
         }
         stage('Deploy') {
             steps {
                 script {
-                    sh 'docker-compose down'
-                    sh 'docker-compose up -d'
+                    docker.image('docker/compose:1.29.2').inside("-v /var/run/docker.sock:/var/run/docker.sock") {
+                        sh 'docker-compose down'
+                        sh 'docker-compose up -d'
+                    }
                 }
             }
         }
