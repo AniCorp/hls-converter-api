@@ -19,7 +19,7 @@ pipeline {
             steps {
                 script {
                     // Build the API image using Dockerfile.api
-                    apiImage = docker.build("${API_IMAGE_NAME}:${IMAGE_TAG}", "-f Dockerfile.api .")
+                    apiImage = docker.build("${API_IMAGE_NAME}:${IMAGE_TAG}", "-f api.dockerfile .")
                 }
             }
         }
@@ -27,7 +27,7 @@ pipeline {
             steps {
                 script {
                     // Build the Encoder image using Dockerfile.encoder
-                    encoderImage = docker.build("${ENCODER_IMAGE_NAME}:${IMAGE_TAG}", "-f Dockerfile.encoder .")
+                    encoderImage = docker.build("${ENCODER_IMAGE_NAME}:${IMAGE_TAG}", "-f encoder.dockerfile .")
                 }
             }
         }
