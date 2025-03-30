@@ -5,7 +5,7 @@ services:
     image: dawoodmasood/hls-converter-api:latest
     build:
       context: .
-      dockerfile: Dockerfile.api
+      dockerfile: api.dockerfile
     restart: always
     ports:
       - "9997:9997"
@@ -18,7 +18,7 @@ services:
     image: dawoodmasood/hls-converter-encoder:latest
     build:
       context: .
-      dockerfile: Dockerfile.encoder
+      dockerfile: encoder.dockerfile
     restart: always
     ports:
       - "9996:9996"
