@@ -1,30 +1,76 @@
 pipeline {
     agent any
+
+    environment {
+        API_IMAGE_NAME     = 'dawoodmasood/hls-converter-api'
+        ENCODER_IMAGE_NAME = 'dawoodmasood/hls-converter-encoder'
+        IMAGE_TAG          = 'latest'
+        API_PORT           = 9997
+        ENCODER_PORT       = 9996
+    }
+
     stages {
         stage('Checkout') {
             steps {
                 checkout scm
             }
         }
-        stage('Build and Push Docker Images') {
+        stage('Build API Image') {
             steps {
                 script {
-                    docker.image('docker/compose:1.29.2').inside("-u 0:0 -v /var/run/docker.sock:/var/run/docker.sock") {
-                        sh 'docker-compose build'
-                        sh 'docker-compose push'
-                    }
+                    // Build the API image using Dockerfile.api
+                    apiImage = docker.build("${API_IMAGE_NAME}:${IMAGE_TAG}", "-f Dockerfile.api .")
                 }
             }
         }
-        stage('Deploy') {
+        stage('Build Encoder Image') {
             steps {
                 script {
-                    docker.image('docker/compose:1.29.2').inside("-u 0:0 -v /var/run/docker.sock:/var/run/docker.sock") {
-                        sh 'docker-compose down'
-                        sh 'docker-compose up -d'
-                    }
+                    // Build the Encoder image using Dockerfile.encoder
+                    encoderImage = docker.build("${ENCODER_IMAGE_NAME}:${IMAGE_TAG}", "-f Dockerfile.encoder .")
                 }
             }
+        }
+        stage('Deploy API') {
+            steps {
+                script {
+                    // Check for an already running container on the API port
+                    def runningApi = sh(script: "docker ps -q --filter publish=${API_PORT}", returnStdout: true).trim()
+                    if (runningApi) {
+                        sh "docker stop ${runningApi}"
+                        sh "docker rm ${runningApi}"
+                    }
+                    
+                    // Deploy the API container
+                    sh "docker run -d --name hls-converter-api -p ${API_PORT}:${API_PORT} ${API_IMAGE_NAME}:${IMAGE_TAG}"
+                }
+            }
+        }
+        stage('Deploy Encoder') {
+            steps {
+                script {
+                    // Check for an already running container on the Encoder port
+                    def runningEncoder = sh(script: "docker ps -q --filter publish=${ENCODER_PORT}", returnStdout: true).trim()
+                    if (runningEncoder) {
+                        sh "docker stop ${runningEncoder}"
+                        sh "docker rm ${runningEncoder}"
+                    }
+                    
+                    // Deploy the Encoder container
+                    sh "docker run -d --name hls-converter-encoder -p ${ENCODER_PORT}:${ENCODER_PORT} ${ENCODER_IMAGE_NAME}:${IMAGE_TAG}"
+                }
+            }
+        }
+    }
+    post {
+        always {
+            cleanWs()
+        }
+        success {
+            echo 'Pipeline completed successfully!'
+        }
+        failure {
+            echo 'Pipeline failed!'
         }
     }
 }
