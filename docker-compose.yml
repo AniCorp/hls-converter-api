@@ -1,0 +1,32 @@
+version: '3.8'
+
+services:
+  api:
+    image: dawoodmasood/hls-converter-api:latest
+    build:
+      context: .
+      dockerfile: Dockerfile.api
+    restart: always
+    ports:
+      - "9997:9997"
+    environment:
+      - NODE_ENV=production
+    networks:
+      - hls-network
+
+  encoder:
+    image: dawoodmasood/hls-converter-encoder:latest
+    build:
+      context: .
+      dockerfile: Dockerfile.encoder
+    restart: always
+    ports:
+      - "9996:9996"
+    environment:
+      - NODE_ENV=production
+    networks:
+      - hls-network
+
+networks:
+  hls-network:
+    driver: bridge
